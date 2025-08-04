@@ -1,4 +1,4 @@
-import { create } from "zustand";
+import { create } from "zustand"; // global state space
 import toast from "react-hot-toast";
 import { axiosInstance } from "../lib/axios";
 import { useAuthStore } from "./useAuthStore";
@@ -34,9 +34,18 @@ export const useChatStore = create((set, get) => ({
     }
   },
   sendMessage: async (messageData) => {
+    // messages // This doesn't get the state
+    // so use a getter from zustand
+    //const { selected_user, messages } = get();
+    /*Even though you initialize messages: [],
+     Zustand state can temporarily get undefined if get_messages hasn’t set it yet due to async race conditions.
+      */
     const { selectedUser, messages } = get();
     try {
-      const res = await axiosInstance.post(`/messages/send/${selectedUser._id}`, messageData);
+      const res = await axiosInstance.post(
+        `/messages/send/${selectedUser._id}`,
+        messageData
+      );
       set({ messages: [...messages, res.data] });
     } catch (error) {
       toast.error(error.response.data.message);
@@ -50,7 +59,8 @@ export const useChatStore = create((set, get) => ({
     const socket = useAuthStore.getState().socket;
 
     socket.on("newMessage", (newMessage) => {
-      const isMessageSentFromSelectedUser = newMessage.senderId === selectedUser._id;
+      const isMessageSentFromSelectedUser =
+        newMessage.senderId === selectedUser._id;
       if (!isMessageSentFromSelectedUser) return;
 
       set({

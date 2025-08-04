@@ -6,7 +6,7 @@ import LoginPage from "./pages/LoginPage";
 import SettingsPage from "./pages/SettingsPage";
 import ProfilePage from "./pages/ProfilePage";
 
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom"; // Route to give specific route
 import { useAuthStore } from "./store/useAuthStore";
 import { useThemeStore } from "./store/useThemeStore";
 import { useEffect } from "react";

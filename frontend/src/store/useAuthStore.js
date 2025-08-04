@@ -1,24 +1,30 @@
+// To have a bunch of different states and functions to use in different components
 import { create } from "zustand";
 import { axiosInstance } from "../lib/axios.js";
 import toast from "react-hot-toast";
 import { io } from "socket.io-client";
 
-const BASE_URL = import.meta.env.MODE === "development" ? "http://localhost:5001" : "/";
+// Backend URL
+const BASE_URL =
+  import.meta.env.MODE === "development" ? "http://localhost:5001" : "/";
 
 export const useAuthStore = create((set, get) => ({
   authUser: null,
   isSigningUp: false,
   isLoggingIn: false,
   isUpdatingProfile: false,
-  isCheckingAuth: true,
+  isCheckingAuth: true, // when we referesh, we check if the user is authenticated or not
+  // While checking, show a loading screen
   onlineUsers: [],
   socket: null,
 
   checkAuth: async () => {
+    // call this function as soon as we visit the application
     try {
-      const res = await axiosInstance.get("/auth/check");
+      // Send a request to the end point
+      const res = await axiosInstance.get("/auth/check"); // Not putting localhost/api as we are already putting it in baseURL, and building on top of it
 
-      set({ authUser: res.data });
+      set({ authUser: res.data }); // if user not authenticated, set it to null
       get().connectSocket();
     } catch (error) {
       console.log("Error in checkAuth:", error);
@@ -31,7 +37,7 @@ export const useAuthStore = create((set, get) => ({
   signup: async (data) => {
     set({ isSigningUp: true });
     try {
-      const res = await axiosInstance.post("/auth/signup", data);
+      const res = await axiosInstance.post("/auth/signup", data); // So that user would be authenticated as soon as they signup
       set({ authUser: res.data });
       toast.success("Account created successfully");
       get().connectSocket();
@@ -94,6 +100,8 @@ export const useAuthStore = create((set, get) => ({
     socket.connect();
 
     set({ socket: socket });
+    // Listen for online user updates
+    // Listening? socket.on()
 
     socket.on("getOnlineUsers", (userIds) => {
       set({ onlineUsers: userIds });
