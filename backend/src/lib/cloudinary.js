@@ -1,8 +1,10 @@
+// Configuring Cloudinary to deal with images
+
 import { v2 as cloudinary } from "cloudinary";
 
 import { config } from "dotenv";
 
-config();
+config(); // To access the environment variables
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -11,3 +13,4 @@ cloudinary.config({
 });
 
 export default cloudinary;
+// Once we upload images, we'll be able to see them in cloudinary bucket

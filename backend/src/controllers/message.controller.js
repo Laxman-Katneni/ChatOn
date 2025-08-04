@@ -3,11 +3,13 @@ import Message from "../models/message.model.js";
 
 import cloudinary from "../lib/cloudinary.js";
 import { getReceiverSocketId, io } from "../lib/socket.js";
-
+// Fetch every user but not ourselves
 export const getUsersForSidebar = async (req, res) => {
   try {
     const loggedInUserId = req.user._id;
-    const filteredUsers = await User.find({ _id: { $ne: loggedInUserId } }).select("-password");
+    const filteredUsers = await User.find({
+      _id: { $ne: loggedInUserId },
+    }).select("-password");
 
     res.status(200).json(filteredUsers);
   } catch (error) {
@@ -20,6 +22,7 @@ export const getMessages = async (req, res) => {
   try {
     const { id: userToChatId } = req.params;
     const myId = req.user._id;
+    // Find all the messages where I am the sender or the other user is the sender
 
     const messages = await Message.find({
       $or: [
@@ -34,7 +37,7 @@ export const getMessages = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
-
+// Message could be text or a image
 export const sendMessage = async (req, res) => {
   try {
     const { text, image } = req.body;
@@ -44,7 +47,7 @@ export const sendMessage = async (req, res) => {
     let imageUrl;
     if (image) {
       // Upload base64 image to cloudinary
-      const uploadResponse = await cloudinary.uploader.upload(image);
+      const uploadResponse = await cloudinary.uploader.upload(image); // if user sends us the image, we can upload it to cloudinary, and it will give us a response
       imageUrl = uploadResponse.secure_url;
     }
 
@@ -52,13 +55,17 @@ export const sendMessage = async (req, res) => {
       senderId,
       receiverId,
       text,
-      image: imageUrl,
+      image: imageUrl, // if there is one in cloudinary, else undefined
     });
 
     await newMessage.save();
+    // Need to add real time functionality here later using socket.io
+    // Instead of having to reload everytime
 
     const receiverSocketId = getReceiverSocketId(receiverId);
+    // If receiver is online, send the event in real time
     if (receiverSocketId) {
+      //io.emit() broadcasts to everyone
       io.to(receiverSocketId).emit("newMessage", newMessage);
     }
 
