@@ -6,19 +6,23 @@ import cloudinary from "../lib/cloudinary.js";
 export const signup = async (req, res) => {
   const { fullName, email, password } = req.body;
   try {
+    // hash password? use bcryptjs
+    // One way hashing but it is deterministic
     if (!fullName || !email || !password) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
     if (password.length < 6) {
-      return res.status(400).json({ message: "Password must be at least 6 characters" });
+      return res
+        .status(400)
+        .json({ message: "Password must be at least 6 characters" });
     }
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email }); // {email}
 
     if (user) return res.status(400).json({ message: "Email already exists" });
 
-    const salt = await bcrypt.genSalt(10);
+    const salt = await bcrypt.genSalt(10); // 10 is general convention
     const hashedPassword = await bcrypt.hash(password, salt);
 
     const newUser = new User({
@@ -28,10 +32,10 @@ export const signup = async (req, res) => {
     });
 
     if (newUser) {
-      // generate jwt token here
+      // generate jwt token
       generateToken(newUser._id, res);
       await newUser.save();
-
+      //201 - something is created successfully
       res.status(201).json({
         _id: newUser._id,
         fullName: newUser.fullName,
@@ -53,7 +57,7 @@ export const login = async (req, res) => {
     const user = await User.findOne({ email });
 
     if (!user) {
-      return res.status(400).json({ message: "Invalid credentials" });
+      return res.status(400).json({ message: "Invalid credentials" }); // The malicious user should not know which one is wrong
     }
 
     const isPasswordCorrect = await bcrypt.compare(password, user.password);
@@ -76,6 +80,7 @@ export const login = async (req, res) => {
 };
 
 export const logout = (req, res) => {
+  // Just clearing out the cookies
   try {
     res.cookie("jwt", "", { maxAge: 0 });
     res.status(200).json({ message: "Logged out successfully" });
@@ -85,6 +90,8 @@ export const logout = (req, res) => {
   }
 };
 
+// to update profile image, we need a service so that we can uplaod our images into - cloudnary
+
 export const updateProfile = async (req, res) => {
   try {
     const { profilePic } = req.body;
@@ -93,6 +100,7 @@ export const updateProfile = async (req, res) => {
     if (!profilePic) {
       return res.status(400).json({ message: "Profile pic is required" });
     }
+    // cloudinary is not a db, its jus a bucket for our images
 
     const uploadResponse = await cloudinary.uploader.upload(profilePic);
     const updatedUser = await User.findByIdAndUpdate(
